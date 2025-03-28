@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <title>SatisBoard</title>
-  <!-- Use a Google Font for a more modern look -->
+  <!-- Google Font for a modern look -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap">
   <style>
     /* COLOR PALETTE */
     :root {
-      --bg-color: #121212;         /* Main page background */
-      --card-bg: #1e1e1e;         /* Form, cards background */
-      --border-color: #333;       /* Border color */
-      --text-color: #e0e0e0;      /* Main text color */
-      --accent-color: #42a5f5;    /* Buttons, highlights */
-      --hover-accent: #1e88e5;    /* Hover for accent */
+      --bg-color: #121212;         
+      --card-bg: #1e1e1e;         
+      --border-color: #333;       
+      --text-color: #e0e0e0;      
+      --accent-color: #42a5f5;    
+      --hover-accent: #1e88e5;    
     }
-
     * {
       box-sizing: border-box;
     }
@@ -50,13 +49,24 @@
       color: var(--text-color);
     }
 
-    /* MAIN LAYOUT: 1 column for simplicity (form + tasks) */
+    /* MAIN LAYOUT: 2 columns */
     .main-layout {
       display: flex;
-      flex-direction: column;
       gap: 2rem;
-      max-width: 900px;
-      margin: 0 auto;
+      max-width: 1200px;
+      margin: 0 auto; /* center in large screens */
+    }
+    .left-column {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .right-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     /* FORM AND TASK CARDS */
@@ -64,9 +74,6 @@
       background: var(--card-bg);
       padding: 1rem;
       border-radius: 8px;
-    }
-    .form-container {
-      max-width: 450px;
       border: 1px solid var(--border-color);
     }
     label {
@@ -99,13 +106,13 @@
       background: var(--hover-accent);
     }
 
+    /* TASKS */
     #tasks-container {
       display: flex;
       flex-direction: column;
       gap: 0.8rem;
     }
     .task-card {
-      border: 1px solid var(--border-color);
       position: relative;
     }
     .task-header {
@@ -123,77 +130,109 @@
 
     /* EDIT FORM */
     #editFormContainer {
-      max-width: 450px;
-      border: 1px solid var(--border-color);
       display: none;
     }
+
+    /* BLACKBOARD SECTION */
+    .blackboard-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      min-height: 200px;
+    }
+    .blackboard-container h2 {
+      margin-top: 0;
+      font-weight: 500;
+    }
+    .blackboard-textarea {
+      width: 100%;
+      height: 120px;
+      resize: vertical;
+    }
+    .save-blackboard-btn {
+      margin-top: 0.5rem;
+    }
+
   </style>
 </head>
 <body>
   <header>
     <h1>SatisBoard</h1>
-    <!-- Link to Satisfactory Tools (production) -->
+    <!-- Example link to Satisfactory Tools (production) -->
     <a href="https://www.satisfactorytools.com/1.0/production" target="_blank">Satisfactory Tools</a>
   </header>
 
   <div class="main-layout">
-    <!-- CREATE TASK FORM -->
-    <div class="form-container">
-      <form id="taskForm">
-        <label for="title">Task Title:</label>
-        <input type="text" id="title" name="title" required />
+    <!-- LEFT COLUMN: Form, edit form, tasks -->
+    <div class="left-column">
+      <!-- CREATE TASK FORM -->
+      <div class="form-container">
+        <form id="taskForm">
+          <label for="title">Task Title:</label>
+          <input type="text" id="title" name="title" required />
 
-        <label for="note">Note:</label>
-        <textarea id="note" name="note" rows="3"></textarea>
+          <label for="note">Note:</label>
+          <textarea id="note" name="note" rows="3"></textarea>
 
-        <label for="priority">Priority:</label>
-        <select id="priority" name="priority" required>
-          <option value="" disabled selected>Select priority...</option>
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-        </select>
+          <label for="priority">Priority:</label>
+          <select id="priority" name="priority" required>
+            <option value="" disabled selected>Select priority...</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
 
-        <button type="submit">Add Task</button>
-      </form>
+          <button type="submit">Add Task</button>
+        </form>
+      </div>
+
+      <!-- EDIT TASK FORM (hidden by default) -->
+      <div class="form-container" id="editFormContainer">
+        <form id="editForm">
+          <input type="hidden" id="editTaskId" />
+
+          <label for="editTitle">Task Title:</label>
+          <input type="text" id="editTitle" name="editTitle" required />
+
+          <label for="editNote">Note:</label>
+          <textarea id="editNote" name="editNote" rows="3"></textarea>
+
+          <label for="editPriority">Priority:</label>
+          <select id="editPriority" name="editPriority" required>
+            <option value="" disabled selected>Select priority...</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+
+          <button type="submit">Update Task</button>
+          <button type="button" onclick="cancelEdit()">Cancel</button>
+        </form>
+      </div>
+
+      <!-- TASKS LIST -->
+      <div id="tasks-container"></div>
     </div>
 
-    <!-- EDIT TASK FORM (hidden by default) -->
-    <div class="form-container" id="editFormContainer">
-      <form id="editForm">
-        <input type="hidden" id="editTaskId" />
-
-        <label for="editTitle">Task Title:</label>
-        <input type="text" id="editTitle" name="editTitle" required />
-
-        <label for="editNote">Note:</label>
-        <textarea id="editNote" name="editNote" rows="3"></textarea>
-
-        <label for="editPriority">Priority:</label>
-        <select id="editPriority" name="editPriority" required>
-          <option value="" disabled selected>Select priority...</option>
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-        </select>
-
-        <button type="submit">Update Task</button>
-        <button type="button" onclick="cancelEdit()">Cancel</button>
-      </form>
+    <!-- RIGHT COLUMN: Blackboard messages -->
+    <div class="right-column">
+      <div class="blackboard-container">
+        <h2>Blackboard</h2>
+        <textarea class="blackboard-textarea" id="blackboardInput" placeholder="Write your message here..."></textarea>
+        <button class="save-blackboard-btn" id="saveBlackboardBtn">Save</button>
+      </div>
     </div>
-
-    <!-- TASKS LIST -->
-    <div id="tasks-container"></div>
   </div>
 
   <script>
-    /*******************************
+    /****************************************************
      *  TASKS & FORMS LOGIC
-     ******************************/
+     ****************************************************/
     const taskForm = document.getElementById('taskForm');
     const tasksContainer = document.getElementById('tasks-container');
 
-    // EDIT FORM ELEMENTS
+    // Edit form elements
     const editFormContainer = document.getElementById('editFormContainer');
     const editForm = document.getElementById('editForm');
     const editTaskId = document.getElementById('editTaskId');
@@ -201,7 +240,10 @@
     const editNote = document.getElementById('editNote');
     const editPriority = document.getElementById('editPriority');
 
-    window.addEventListener('DOMContentLoaded', loadTasks);
+    window.addEventListener('DOMContentLoaded', () => {
+      loadTasks();
+      loadBlackboard();
+    });
 
     // Create new task
     taskForm.addEventListener('submit', async (e) => {
@@ -211,7 +253,6 @@
       const priority = document.getElementById('priority').value;
 
       if (!title || !priority) return;
-
       try {
         const response = await fetch('/api/tasks', {
           method: 'POST',
@@ -238,7 +279,7 @@
 
         tasks.forEach(task => {
           const card = document.createElement('div');
-          card.classList.add('task-card');
+          card.classList.add('form-container', 'task-card'); // reuse styles
 
           const taskHeader = document.createElement('div');
           taskHeader.classList.add('task-header');
@@ -278,7 +319,7 @@
       }
     }
 
-    // Show edit form with task's current data
+    // Show edit form with current data
     function openEditForm(task) {
       editTaskId.value = task.id;
       editTitle.value = task.title;
@@ -289,14 +330,13 @@
       editFormContainer.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Handle the update (PUT) request
+    // Update (PUT) request
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const taskId = editTaskId.value;
       const title = editTitle.value;
       const note = editNote.value;
       const priority = editPriority.value;
-
       try {
         const response = await fetch(`/api/tasks/${taskId}`, {
           method: 'PUT',
@@ -336,6 +376,44 @@
         console.error('Error deleting task:', error);
       }
     }
+
+    /****************************************************
+     *  BLACKBOARD LOGIC
+     ****************************************************/
+    const blackboardInput = document.getElementById('blackboardInput');
+    const saveBlackboardBtn = document.getElementById('saveBlackboardBtn');
+
+    // Load blackboard content from the server
+    async function loadBlackboard() {
+      try {
+        const res = await fetch('/api/blackboard');
+        const data = await res.json();
+        if (data && data.message !== undefined) {
+          blackboardInput.value = data.message;
+        }
+      } catch (err) {
+        console.error('Error loading blackboard:', err);
+      }
+    }
+
+    // Save blackboard content to the server
+    saveBlackboardBtn.addEventListener('click', async () => {
+      try {
+        const message = blackboardInput.value;
+        const res = await fetch('/api/blackboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        if (!res.ok) {
+          alert('Error saving blackboard message');
+        } else {
+          alert('Blackboard updated!');
+        }
+      } catch (err) {
+        console.error('Error saving blackboard:', err);
+      }
+    });
   </script>
 </body>
 </html>
