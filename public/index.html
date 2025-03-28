@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>SatisBoard</title>
   <style>
+    /* DARKER THEME */
     body {
       font-family: Arial, sans-serif;
       margin: 2rem;
-      background: #f5f5f5;
+      background: #1d1d1d;
+      color: #f0f0f0;
     }
     header {
       text-align: center;
@@ -15,10 +17,10 @@
     }
     h1 {
       margin: 0;
-      color: #333;
+      color: #f0f0f0;
     }
-    form {
-      background: #fff;
+    .form-container {
+      background: #2a2a2a;
       padding: 1rem;
       margin-bottom: 1rem;
       border-radius: 8px;
@@ -33,8 +35,10 @@
       margin-top: 0.3rem;
       margin-bottom: 0.8rem;
       padding: 0.5rem;
-      border: 1px solid #ccc;
+      border: 1px solid #444;
       border-radius: 4px;
+      background: #3b3b3b;
+      color: #f0f0f0;
     }
     button {
       background: #007BFF;
@@ -43,6 +47,7 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      margin-right: 0.5rem;
     }
     button:hover {
       background: #0056b3;
@@ -53,16 +58,22 @@
       gap: 0.5rem;
     }
     .task-card {
-      background: #fff;
+      background: #2a2a2a;
       padding: 1rem;
       border-radius: 8px;
+      position: relative;
     }
     .task-header {
       font-weight: bold;
+      margin-bottom: 0.3rem;
     }
     .task-priority {
-      color: #888;
+      color: #bbb;
       font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+    .task-actions {
+      margin-top: 0.5rem;
     }
   </style>
 </head>
@@ -71,23 +82,50 @@
     <h1>SatisBoard</h1>
   </header>
 
-  <form id="taskForm">
-    <label for="title">Task Title:</label>
-    <input type="text" id="title" name="title" required />
+  <!-- CREATE TASK FORM -->
+  <div class="form-container">
+    <form id="taskForm">
+      <label for="title">Task Title:</label>
+      <input type="text" id="title" name="title" required />
 
-    <label for="note">Note:</label>
-    <textarea id="note" name="note" rows="3"></textarea>
+      <label for="note">Note:</label>
+      <textarea id="note" name="note" rows="3"></textarea>
 
-    <label for="priority">Priority:</label>
-    <select id="priority" name="priority" required>
-      <option value="" disabled selected>Select priority...</option>
-      <option value="Low">Low</option>
-      <option value="Medium">Medium</option>
-      <option value="High">High</option>
-    </select>
+      <label for="priority">Priority:</label>
+      <select id="priority" name="priority" required>
+        <option value="" disabled selected>Select priority...</option>
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+      </select>
 
-    <button type="submit">Add Task</button>
-  </form>
+      <button type="submit">Add Task</button>
+    </form>
+  </div>
+
+  <!-- EDIT TASK FORM (hidden by default) -->
+  <div class="form-container" id="editFormContainer" style="display: none;">
+    <form id="editForm">
+      <input type="hidden" id="editTaskId" />
+
+      <label for="editTitle">Task Title:</label>
+      <input type="text" id="editTitle" name="editTitle" required />
+
+      <label for="editNote">Note:</label>
+      <textarea id="editNote" name="editNote" rows="3"></textarea>
+
+      <label for="editPriority">Priority:</label>
+      <select id="editPriority" name="editPriority" required>
+        <option value="" disabled selected>Select priority...</option>
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+      </select>
+
+      <button type="submit">Update Task</button>
+      <button type="button" onclick="cancelEdit()">Cancel</button>
+    </form>
+  </div>
 
   <div id="tasks-container"></div>
 
@@ -95,36 +133,44 @@
     const taskForm = document.getElementById('taskForm');
     const tasksContainer = document.getElementById('tasks-container');
 
-    // Fetch and display existing tasks on page load
+    // Edit form elements
+    const editFormContainer = document.getElementById('editFormContainer');
+    const editForm = document.getElementById('editForm');
+    const editTaskId = document.getElementById('editTaskId');
+    const editTitle = document.getElementById('editTitle');
+    const editNote = document.getElementById('editNote');
+    const editPriority = document.getElementById('editPriority');
+
+    // On page load, fetch tasks
     window.addEventListener('DOMContentLoaded', loadTasks);
 
-    // Handle form submission
+    // Create new task
     taskForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const title = document.getElementById('title').value;
       const note = document.getElementById('note').value;
       const priority = document.getElementById('priority').value;
 
       if (!title || !priority) return;
 
-      // Send the new task to the server
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, note, priority })
-      });
-
-      if (response.ok) {
-        // Clear form
+      try {
+        const response = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, note, priority })
+        });
+        if (!response.ok) {
+          alert('Error creating task');
+          return;
+        }
         taskForm.reset();
-        // Reload tasks
         loadTasks();
-      } else {
-        alert('Error creating task. Make sure Title and Priority are entered.');
+      } catch (error) {
+        console.error('Error creating task:', error);
       }
     });
 
+    // Load tasks from server
     async function loadTasks() {
       tasksContainer.innerHTML = '';
       try {
@@ -146,14 +192,93 @@
           taskPriority.classList.add('task-priority');
           taskPriority.textContent = `Priority: ${task.priority}`;
 
+          // Create a container for the buttons
+          const taskActions = document.createElement('div');
+          taskActions.classList.add('task-actions');
+
+          const editBtn = document.createElement('button');
+          editBtn.textContent = 'Edit';
+          editBtn.addEventListener('click', () => openEditForm(task));
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Delete';
+          deleteBtn.addEventListener('click', () => deleteTask(task.id));
+
+          taskActions.appendChild(editBtn);
+          taskActions.appendChild(deleteBtn);
+
           card.appendChild(taskHeader);
           card.appendChild(taskNote);
           card.appendChild(taskPriority);
+          card.appendChild(taskActions);
 
           tasksContainer.appendChild(card);
         });
       } catch (err) {
         console.error('Error loading tasks:', err);
+      }
+    }
+
+    // Show edit form with task's current data
+    function openEditForm(task) {
+      editTaskId.value = task.id;
+      editTitle.value = task.title;
+      editNote.value = task.note;
+      editPriority.value = task.priority;
+
+      editFormContainer.style.display = 'block';
+      // Scroll to the edit form if desired
+      editFormContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Handle the update (PUT) request
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const taskId = editTaskId.value;
+      const title = editTitle.value;
+      const note = editNote.value;
+      const priority = editPriority.value;
+
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, note, priority })
+        });
+        if (!response.ok) {
+          alert('Error updating task');
+          return;
+        }
+
+        // Hide edit form & refresh tasks
+        cancelEdit();
+        loadTasks();
+      } catch (error) {
+        console.error('Error updating task:', error);
+      }
+    });
+
+    // Cancel edit (hide form)
+    function cancelEdit() {
+      editFormContainer.style.display = 'none';
+      editForm.reset();
+    }
+
+    // Delete a task
+    async function deleteTask(taskId) {
+      if (!confirm('Are you sure you want to delete this task?')) return;
+
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          loadTasks();
+        } else {
+          alert('Error deleting task');
+        }
+      } catch (error) {
+        console.error('Error deleting task:', error);
       }
     }
   </script>

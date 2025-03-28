@@ -5,22 +5,31 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Serve the 'public' directory for static files (index.html, etc.)
+// Serve the 'public' directory for static files
 app.use(express.static('public'));
 
-// In-memory storage for tasks (for demonstration only!)
+// In-memory storage for tasks
 let tasks = [];
 
-// Get all tasks
+/* 
+  Example of a task object:
+  {
+    id: 1,
+    title: 'Sample Task',
+    note: 'Some notes here...',
+    priority: 'High'
+  }
+*/
+
+// GET all tasks
 app.get('/api/tasks', (req, res) => {
   res.json(tasks);
 });
 
-// Create a new task
+// CREATE a new task
 app.post('/api/tasks', (req, res) => {
   const { title, note, priority } = req.body;
 
-  // Simple validation
   if (!title || !priority) {
     return res.status(400).json({ error: 'Title and priority are required.' });
   }
@@ -34,6 +43,42 @@ app.post('/api/tasks', (req, res) => {
   
   tasks.push(newTask);
   return res.status(201).json(newTask);
+});
+
+// UPDATE an existing task
+app.put('/api/tasks/:id', (req, res) => {
+  const taskId = parseInt(req.params.id, 10);
+  const { title, note, priority } = req.body;
+  
+  const index = tasks.findIndex((t) => t.id === taskId);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Task not found.' });
+  }
+
+  // Basic validation
+  if (!title || !priority) {
+    return res.status(400).json({ error: 'Title and priority are required for editing.' });
+  }
+
+  // Update fields
+  tasks[index].title = title;
+  tasks[index].note = note;
+  tasks[index].priority = priority;
+
+  res.json(tasks[index]);
+});
+
+// DELETE a task
+app.delete('/api/tasks/:id', (req, res) => {
+  const taskId = parseInt(req.params.id, 10);
+  const index = tasks.findIndex((t) => t.id === taskId);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Task not found.' });
+  }
+  
+  // Remove from array
+  const removedTask = tasks.splice(index, 1);
+  res.json({ message: 'Task deleted', deletedTask: removedTask[0] });
 });
 
 // Start the server
