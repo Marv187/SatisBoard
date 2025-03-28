@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap">
   <style>
-    /* COLOR PALETTE (Adjust as you like) */
+    /* COLOR PALETTE */
     :root {
       --bg-color: #121212;         /* Main page background */
       --card-bg: #1e1e1e;         /* Form, cards background */
@@ -50,21 +50,13 @@
       color: var(--text-color);
     }
 
-    /* MAIN LAYOUT: 2 columns: left (form/tasks) and right (calculator) */
+    /* MAIN LAYOUT: 1 column for simplicity (form + tasks) */
     .main-layout {
       display: flex;
-      gap: 2rem;
-      align-items: flex-start;
-    }
-    .left-column {
-      flex: 2; 
-      display: flex;
       flex-direction: column;
-      gap: 1.5rem;
-    }
-    .right-column {
-      flex: 1; 
-      position: relative; /* So the calculator can be absolutely positioned within this column */
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
     }
 
     /* FORM AND TASK CARDS */
@@ -75,7 +67,6 @@
     }
     .form-container {
       max-width: 450px;
-      margin: 0 auto 0 0; /* left-align in column */
       border: 1px solid var(--border-color);
     }
     label {
@@ -133,157 +124,66 @@
     /* EDIT FORM */
     #editFormContainer {
       max-width: 450px;
-      margin: 0 auto 0 0;
       border: 1px solid var(--border-color);
       display: none;
-    }
-
-    /* CALCULATOR WIDGET */
-    #calculatorWidget {
-      position: absolute;  /* placed inside right-column */
-      top: 0;
-      left: 0;
-      width: 260px;
-      background: var(--card-bg);
-      color: var(--text-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 0.5rem;
-      cursor: move; 
-      box-shadow: 0 0 10px rgba(0,0,0,0.7);
-    }
-    #calculatorHeader {
-      font-weight: 500;
-      text-align: center;
-      margin-bottom: 0.5rem;
-      cursor: move;
-    }
-    #calcInput {
-      width: 100%;
-      padding: 0.6rem;
-      margin-bottom: 0.5rem;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      background: #2a2a2a;
-      color: var(--text-color);
-      font-family: 'Roboto', sans-serif;
-    }
-    #calculatorWidget button {
-      margin: 3px;
-      width: 54px;
-      height: 40px;
-      background: #2a2a2a;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      color: var(--text-color);
-      cursor: pointer;
-      font-weight: 500;
-      transition: background 0.2s;
-    }
-    #calculatorWidget button:hover {
-      background: var(--hover-accent);
-      border-color: var(--hover-accent);
-    }
-    .calc-row {
-      display: flex;
-      justify-content: space-between;
     }
   </style>
 </head>
 <body>
   <header>
     <h1>SatisBoard</h1>
-    <!-- Updated URL to Satisfactory Tools production -->
+    <!-- Link to Satisfactory Tools (production) -->
     <a href="https://www.satisfactorytools.com/1.0/production" target="_blank">Satisfactory Tools</a>
   </header>
 
   <div class="main-layout">
-    <!-- LEFT COLUMN: Form + Edit Form + Task List -->
-    <div class="left-column">
-      <!-- CREATE TASK FORM -->
-      <div class="form-container">
-        <form id="taskForm">
-          <label for="title">Task Title:</label>
-          <input type="text" id="title" name="title" required />
+    <!-- CREATE TASK FORM -->
+    <div class="form-container">
+      <form id="taskForm">
+        <label for="title">Task Title:</label>
+        <input type="text" id="title" name="title" required />
 
-          <label for="note">Note:</label>
-          <textarea id="note" name="note" rows="3"></textarea>
+        <label for="note">Note:</label>
+        <textarea id="note" name="note" rows="3"></textarea>
 
-          <label for="priority">Priority:</label>
-          <select id="priority" name="priority" required>
-            <option value="" disabled selected>Select priority...</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
+        <label for="priority">Priority:</label>
+        <select id="priority" name="priority" required>
+          <option value="" disabled selected>Select priority...</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
 
-          <button type="submit">Add Task</button>
-        </form>
-      </div>
-
-      <!-- EDIT TASK FORM (hidden by default) -->
-      <div class="form-container" id="editFormContainer">
-        <form id="editForm">
-          <input type="hidden" id="editTaskId" />
-
-          <label for="editTitle">Task Title:</label>
-          <input type="text" id="editTitle" name="editTitle" required />
-
-          <label for="editNote">Note:</label>
-          <textarea id="editNote" name="editNote" rows="3"></textarea>
-
-          <label for="editPriority">Priority:</label>
-          <select id="editPriority" name="editPriority" required>
-            <option value="" disabled selected>Select priority...</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
-
-          <button type="submit">Update Task</button>
-          <button type="button" onclick="cancelEdit()">Cancel</button>
-        </form>
-      </div>
-
-      <!-- TASKS LIST -->
-      <div id="tasks-container"></div>
+        <button type="submit">Add Task</button>
+      </form>
     </div>
 
-    <!-- RIGHT COLUMN: Draggable Calculator -->
-    <div class="right-column">
-      <div id="calculatorWidget">
-        <div id="calculatorHeader">Calculator</div>
-        <input id="calcInput" type="text" placeholder="0" readonly />
+    <!-- EDIT TASK FORM (hidden by default) -->
+    <div class="form-container" id="editFormContainer">
+      <form id="editForm">
+        <input type="hidden" id="editTaskId" />
 
-        <div class="calc-row">
-          <button onclick="pressKey('7')">7</button>
-          <button onclick="pressKey('8')">8</button>
-          <button onclick="pressKey('9')">9</button>
-          <button onclick="pressKey('/')">÷</button>
-        </div>
-        <div class="calc-row">
-          <button onclick="pressKey('4')">4</button>
-          <button onclick="pressKey('5')">5</button>
-          <button onclick="pressKey('6')">6</button>
-          <button onclick="pressKey('*')">×</button>
-        </div>
-        <div class="calc-row">
-          <button onclick="pressKey('1')">1</button>
-          <button onclick="pressKey('2')">2</button>
-          <button onclick="pressKey('3')">3</button>
-          <button onclick="pressKey('-')">−</button>
-        </div>
-        <div class="calc-row">
-          <button onclick="pressKey('0')">0</button>
-          <button onclick="pressKey('.')">.</button>
-          <button onclick="calculate()">=</button>
-          <button onclick="pressKey('+')">+</button>
-        </div>
-        <div class="calc-row">
-          <button onclick="clearCalc()" style="width:100%">C</button>
-        </div>
-      </div>
+        <label for="editTitle">Task Title:</label>
+        <input type="text" id="editTitle" name="editTitle" required />
+
+        <label for="editNote">Note:</label>
+        <textarea id="editNote" name="editNote" rows="3"></textarea>
+
+        <label for="editPriority">Priority:</label>
+        <select id="editPriority" name="editPriority" required>
+          <option value="" disabled selected>Select priority...</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
+
+        <button type="submit">Update Task</button>
+        <button type="button" onclick="cancelEdit()">Cancel</button>
+      </form>
     </div>
+
+    <!-- TASKS LIST -->
+    <div id="tasks-container"></div>
   </div>
 
   <script>
@@ -435,72 +335,6 @@
       } catch (error) {
         console.error('Error deleting task:', error);
       }
-    }
-
-    /*******************************
-     *  CALCULATOR LOGIC
-     ******************************/
-    function pressKey(key) {
-      const display = document.getElementById('calcInput');
-      if (display.value === '0' || display.value === '') {
-        display.value = key;
-      } else {
-        display.value += key;
-      }
-    }
-
-    function calculate() {
-      const display = document.getElementById('calcInput');
-      try {
-        // Simple eval for demonstration
-        const result = eval(display.value);
-        display.value = result;
-      } catch {
-        display.value = 'Error';
-      }
-    }
-
-    function clearCalc() {
-      document.getElementById('calcInput').value = '';
-    }
-
-    /*******************************
-     *  DRAGGABLE WIDGET
-     ******************************/
-    const calculatorWidget = document.getElementById('calculatorWidget');
-    const calculatorHeader = document.getElementById('calculatorHeader');
-
-    let offsetX, offsetY;
-    calculatorHeader.addEventListener('mousedown', startDrag);
-
-    function startDrag(e) {
-      e.preventDefault();
-      offsetX = e.clientX - calculatorWidget.getBoundingClientRect().left;
-      offsetY = e.clientY - calculatorWidget.getBoundingClientRect().top;
-      document.addEventListener('mousemove', dragWidget);
-      document.addEventListener('mouseup', stopDrag);
-    }
-
-    function dragWidget(e) {
-      e.preventDefault();
-      // New position relative to the .right-column
-      const parentRect = calculatorWidget.parentElement.getBoundingClientRect();
-      let left = e.clientX - offsetX - parentRect.left;
-      let top = e.clientY - offsetY - parentRect.top;
-
-      // Optional: Keep calculator within the .right-column boundaries
-      const maxLeft = parentRect.width - calculatorWidget.offsetWidth;
-      const maxTop = parentRect.height - calculatorWidget.offsetHeight;
-      left = Math.max(0, Math.min(left, maxLeft));
-      top = Math.max(0, Math.min(top, maxTop));
-
-      calculatorWidget.style.left = left + 'px';
-      calculatorWidget.style.top = top + 'px';
-    }
-
-    function stopDrag() {
-      document.removeEventListener('mousemove', dragWidget);
-      document.removeEventListener('mouseup', stopDrag);
     }
   </script>
 </body>
