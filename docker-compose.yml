@@ -1,0 +1,8 @@
+version: "3.8"
+
+services:
+  satisboard:
+    build: .
+    container_name: satisboard
+    ports:
+      - "3000:3000"
