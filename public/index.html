@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>SatisBoard</title>
   <style>
-    /* DARKER THEME */
+    /* DARK THEME */
     body {
       font-family: Arial, sans-serif;
       margin: 2rem;
@@ -15,9 +15,22 @@
       text-align: center;
       margin-bottom: 1.5rem;
     }
+    header a {
+      color: #f0f0f0;
+      text-decoration: none;
+      font-weight: bold;
+      margin-left: 1rem;
+      border: 1px solid #f0f0f0;
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    header a:hover {
+      background: #2a2a2a;
+    }
     h1 {
       margin: 0;
       color: #f0f0f0;
+      display: inline-block;
     }
     .form-container {
       background: #2a2a2a;
@@ -75,11 +88,60 @@
     .task-actions {
       margin-top: 0.5rem;
     }
+
+    /* CALCULATOR WIDGET STYLES */
+    #calculatorWidget {
+      position: fixed;  /* so it stays in place while dragging around the viewport */
+      top: 100px;
+      right: 50px;
+      width: 220px;
+      background: #2a2a2a;
+      color: #f0f0f0;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 0.5rem;
+      z-index: 999;
+      cursor: move;  /* show draggable cursor on the header */
+    }
+    #calculatorHeader {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      text-align: center;
+      cursor: move;
+    }
+    #calcInput {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #3b3b3b;
+      color: #f0f0f0;
+    }
+    #calculatorWidget button {
+      margin: 2px;
+      width: 48px;
+      height: 36px;
+      background: #444;
+      border: none;
+      border-radius: 4px;
+      color: #f0f0f0;
+      cursor: pointer;
+    }
+    #calculatorWidget button:hover {
+      background: #666;
+    }
+    .calc-row {
+      display: flex;
+      justify-content: space-between;
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>SatisBoard</h1>
+    <!-- Link to Satisfactory Tools -->
+    <a href="https://www.satisfactorytools.com/1.0" target="_blank">Satisfactory Tools</a>
   </header>
 
   <!-- CREATE TASK FORM -->
@@ -127,13 +189,48 @@
     </form>
   </div>
 
+  <!-- TASKS CONTAINER -->
   <div id="tasks-container"></div>
+
+  <!-- CALCULATOR WIDGET -->
+  <div id="calculatorWidget">
+    <div id="calculatorHeader">Calculator</div>
+    <input id="calcInput" type="text" placeholder="0" readonly />
+
+    <div class="calc-row">
+      <button onclick="pressKey('7')">7</button>
+      <button onclick="pressKey('8')">8</button>
+      <button onclick="pressKey('9')">9</button>
+      <button onclick="pressKey('/')">÷</button>
+    </div>
+    <div class="calc-row">
+      <button onclick="pressKey('4')">4</button>
+      <button onclick="pressKey('5')">5</button>
+      <button onclick="pressKey('6')">6</button>
+      <button onclick="pressKey('*')">×</button>
+    </div>
+    <div class="calc-row">
+      <button onclick="pressKey('1')">1</button>
+      <button onclick="pressKey('2')">2</button>
+      <button onclick="pressKey('3')">3</button>
+      <button onclick="pressKey('-')">−</button>
+    </div>
+    <div class="calc-row">
+      <button onclick="pressKey('0')">0</button>
+      <button onclick="pressKey('.')">.</button>
+      <button onclick="calculate()">=</button>
+      <button onclick="pressKey('+')">+</button>
+    </div>
+    <div class="calc-row">
+      <button onclick="clearCalc()" style="width:100%">C</button>
+    </div>
+  </div>
 
   <script>
     const taskForm = document.getElementById('taskForm');
     const tasksContainer = document.getElementById('tasks-container');
 
-    // Edit form elements
+    // EDIT FORM ELEMENTS
     const editFormContainer = document.getElementById('editFormContainer');
     const editForm = document.getElementById('editForm');
     const editTaskId = document.getElementById('editTaskId');
@@ -192,7 +289,7 @@
           taskPriority.classList.add('task-priority');
           taskPriority.textContent = `Priority: ${task.priority}`;
 
-          // Create a container for the buttons
+          // Buttons
           const taskActions = document.createElement('div');
           taskActions.classList.add('task-actions');
 
@@ -227,7 +324,6 @@
       editPriority.value = task.priority;
 
       editFormContainer.style.display = 'block';
-      // Scroll to the edit form if desired
       editFormContainer.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -250,7 +346,6 @@
           return;
         }
 
-        // Hide edit form & refresh tasks
         cancelEdit();
         loadTasks();
       } catch (error) {
@@ -280,6 +375,72 @@
       } catch (error) {
         console.error('Error deleting task:', error);
       }
+    }
+
+    /* 
+      CALCULATOR LOGIC
+      - pressKey() appends a character
+      - calculate() uses eval() for simplicity (not recommended in production),
+        but it's fine for a quick local calculator.
+      - clearCalc() resets the display
+    */
+    function pressKey(key) {
+      const display = document.getElementById('calcInput');
+      // If display is "0", replace it; otherwise append
+      if (display.value === '0' || display.value === '') {
+        display.value = key;
+      } else {
+        display.value += key;
+      }
+    }
+
+    function calculate() {
+      const display = document.getElementById('calcInput');
+      try {
+        // Quick and dirty approach using eval
+        const result = eval(display.value);
+        display.value = result;
+      } catch (err) {
+        display.value = 'Error';
+      }
+    }
+
+    function clearCalc() {
+      document.getElementById('calcInput').value = '';
+    }
+
+    /*
+      DRAGGABLE CALCULATOR WIDGET
+      - We'll track mouse events on #calculatorHeader
+      - The rest of the widget moves along
+    */
+    const calculatorWidget = document.getElementById('calculatorWidget');
+    const calculatorHeader = document.getElementById('calculatorHeader');
+
+    let offsetX, offsetY;
+    calculatorHeader.addEventListener('mousedown', startDrag);
+
+    function startDrag(e) {
+      e.preventDefault();
+      // Current mouse position relative to the widget's top-left
+      offsetX = e.clientX - calculatorWidget.getBoundingClientRect().left;
+      offsetY = e.clientY - calculatorWidget.getBoundingClientRect().top;
+      document.addEventListener('mousemove', dragWidget);
+      document.addEventListener('mouseup', stopDrag);
+    }
+
+    function dragWidget(e) {
+      e.preventDefault();
+      // Calculate new widget position
+      const left = e.clientX - offsetX;
+      const top = e.clientY - offsetY;
+      calculatorWidget.style.left = left + 'px';
+      calculatorWidget.style.top = top + 'px';
+    }
+
+    function stopDrag(e) {
+      document.removeEventListener('mousemove', dragWidget);
+      document.removeEventListener('mouseup', stopDrag);
     }
   </script>
 </body>
