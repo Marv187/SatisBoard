@@ -1,99 +1,84 @@
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
-app.use(express.json());
-app.use(cors());
-
-// Serve 'public' directory
-app.use(express.static('public'));
-
-// In-memory storage for tasks
-let tasks = [];
-
-/*
-  tasks Example:
-  {
-    id: 1,
-    title: 'Sample Task',
-    note: 'Some notes here...',
-    priority: 'High'
-  }
-*/
-
-// In-memory storage for a single blackboard message
-let blackboardMessage = "";
-
-/********************************************************
- *  TASK ENDPOINTS
- ********************************************************/
-app.get('/api/tasks', (req, res) => {
-  res.json(tasks);
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" }
 });
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// In-memory task and blackboard storage
+let tasks = [];
+let blackboard = { message: '' };
+
+// ---- TASK ROUTES ----
+app.get('/api/tasks', (req, res) => res.json(tasks));
 
 app.post('/api/tasks', (req, res) => {
   const { title, note, priority } = req.body;
-  if (!title || !priority) {
-    return res.status(400).json({ error: 'Title and priority are required.' });
-  }
   const newTask = {
-    id: tasks.length + 1,
+    id: Date.now(),
     title,
-    note: note || '',
+    note,
     priority
   };
   tasks.push(newTask);
-  return res.status(201).json(newTask);
+  io.emit('taskCreated', newTask);
+  res.status(201).json(newTask);
 });
 
 app.put('/api/tasks/:id', (req, res) => {
-  const taskId = parseInt(req.params.id, 10);
+  const taskId = parseInt(req.params.id);
   const { title, note, priority } = req.body;
-  const index = tasks.findIndex((t) => t.id === taskId);
-  if (index === -1) {
-    return res.status(404).json({ error: 'Task not found.' });
-  }
-  if (!title || !priority) {
-    return res.status(400).json({ error: 'Title and priority are required.' });
-  }
-  tasks[index].title = title;
-  tasks[index].note = note;
-  tasks[index].priority = priority;
-  res.json(tasks[index]);
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return res.status(404).send();
+  task.title = title;
+  task.note = note;
+  task.priority = priority;
+  io.emit('taskUpdated', task);
+  res.sendStatus(200);
 });
 
 app.delete('/api/tasks/:id', (req, res) => {
-  const taskId = parseInt(req.params.id, 10);
-  const index = tasks.findIndex((t) => t.id === taskId);
-  if (index === -1) {
-    return res.status(404).json({ error: 'Task not found.' });
-  }
-  const removedTask = tasks.splice(index, 1);
-  res.json({ message: 'Task deleted', deletedTask: removedTask[0] });
+  const taskId = parseInt(req.params.id);
+  tasks = tasks.filter(t => t.id !== taskId);
+  io.emit('taskDeleted', { id: taskId });
+  res.sendStatus(200);
 });
 
-/********************************************************
- *  BLACKBOARD ENDPOINTS
- ********************************************************/
-// Get the current blackboard message
+app.post('/api/tasks/reorder', (req, res) => {
+  const { orderedIds } = req.body;
+  tasks = orderedIds.map(id => tasks.find(t => t.id === id)).filter(Boolean);
+  io.emit('tasksReordered', tasks);
+  res.sendStatus(200);
+});
+
+// ---- BLACKBOARD ROUTES ----
 app.get('/api/blackboard', (req, res) => {
-  res.json({ message: blackboardMessage });
+  res.json(blackboard);
 });
 
-// Update the blackboard message
 app.post('/api/blackboard', (req, res) => {
   const { message } = req.body;
-  if (message === undefined) {
-    return res.status(400).json({ error: 'Message text is required.' });
-  }
-  blackboardMessage = message;
-  res.json({ message: blackboardMessage });
+  blackboard.message = message;
+  io.emit('blackboardUpdated', blackboard);
+  res.sendStatus(200);
 });
 
-/********************************************************
- *  START SERVER
- ********************************************************/
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`SatisBoard server running on port ${PORT}`);
+// ---- SOCKET.IO CONNECTION ----
+io.on('connection', (socket) => {
+  console.log('A user connected');
+});
+
+// ---- START SERVER ----
+const PORT = 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
