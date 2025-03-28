@@ -3,41 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <title>SatisBoard</title>
+  <!-- Use a Google Font for a more modern look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap">
   <style>
-    /* DARK THEME */
+    /* COLOR PALETTE (Adjust as you like) */
+    :root {
+      --bg-color: #121212;         /* Main page background */
+      --card-bg: #1e1e1e;         /* Form, cards background */
+      --border-color: #333;       /* Border color */
+      --text-color: #e0e0e0;      /* Main text color */
+      --accent-color: #42a5f5;    /* Buttons, highlights */
+      --hover-accent: #1e88e5;    /* Hover for accent */
+    }
+
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      background: #1d1d1d;
-      color: #f0f0f0;
+      margin: 0;
+      padding: 2rem;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Roboto', sans-serif;
     }
     header {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
     }
     header a {
-      color: #f0f0f0;
+      color: var(--text-color);
       text-decoration: none;
-      font-weight: bold;
-      margin-left: 1rem;
-      border: 1px solid #f0f0f0;
-      padding: 0.5rem;
+      font-weight: 500;
+      margin-left: 1.5rem;
+      border: 1px solid var(--text-color);
+      padding: 0.5rem 0.8rem;
       border-radius: 4px;
+      transition: background 0.2s;
     }
     header a:hover {
       background: #2a2a2a;
     }
     h1 {
       margin: 0;
-      color: #f0f0f0;
       display: inline-block;
+      color: var(--text-color);
+    }
+
+    /* MAIN LAYOUT: 2 columns: left (form/tasks) and right (calculator) */
+    .main-layout {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+    .left-column {
+      flex: 2; 
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .right-column {
+      flex: 1; 
+      position: relative; /* So the calculator can be absolutely positioned within this column */
+    }
+
+    /* FORM AND TASK CARDS */
+    .form-container, .task-card {
+      background: var(--card-bg);
+      padding: 1rem;
+      border-radius: 8px;
     }
     .form-container {
-      background: #2a2a2a;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-      max-width: 400px;
+      max-width: 450px;
+      margin: 0 auto 0 0; /* left-align in column */
+      border: 1px solid var(--border-color);
     }
     label {
       display: block;
@@ -47,37 +86,39 @@
       width: 100%;
       margin-top: 0.3rem;
       margin-bottom: 0.8rem;
-      padding: 0.5rem;
-      border: 1px solid #444;
+      padding: 0.6rem;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
-      background: #3b3b3b;
-      color: #f0f0f0;
+      background: #2a2a2a;
+      color: var(--text-color);
+      font-family: 'Roboto', sans-serif;
     }
     button {
-      background: #007BFF;
+      background: var(--accent-color);
       color: #fff;
       padding: 0.6rem 1.2rem;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       margin-right: 0.5rem;
+      transition: background 0.2s;
+      font-weight: 500;
     }
     button:hover {
-      background: #0056b3;
+      background: var(--hover-accent);
     }
+
     #tasks-container {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.8rem;
     }
     .task-card {
-      background: #2a2a2a;
-      padding: 1rem;
-      border-radius: 8px;
+      border: 1px solid var(--border-color);
       position: relative;
     }
     .task-header {
-      font-weight: bold;
+      font-weight: 500;
       margin-bottom: 0.3rem;
     }
     .task-priority {
@@ -89,47 +130,59 @@
       margin-top: 0.5rem;
     }
 
-    /* CALCULATOR WIDGET STYLES */
+    /* EDIT FORM */
+    #editFormContainer {
+      max-width: 450px;
+      margin: 0 auto 0 0;
+      border: 1px solid var(--border-color);
+      display: none;
+    }
+
+    /* CALCULATOR WIDGET */
     #calculatorWidget {
-      position: fixed;  /* so it stays in place while dragging around the viewport */
-      top: 100px;
-      right: 50px;
-      width: 220px;
-      background: #2a2a2a;
-      color: #f0f0f0;
-      border: 1px solid #444;
+      position: absolute;  /* placed inside right-column */
+      top: 0;
+      left: 0;
+      width: 260px;
+      background: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 0.5rem;
-      z-index: 999;
-      cursor: move;  /* show draggable cursor on the header */
+      cursor: move; 
+      box-shadow: 0 0 10px rgba(0,0,0,0.7);
     }
     #calculatorHeader {
-      font-weight: bold;
-      margin-bottom: 0.5rem;
+      font-weight: 500;
       text-align: center;
+      margin-bottom: 0.5rem;
       cursor: move;
     }
     #calcInput {
       width: 100%;
-      padding: 0.5rem;
+      padding: 0.6rem;
       margin-bottom: 0.5rem;
-      border: 1px solid #444;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
-      background: #3b3b3b;
-      color: #f0f0f0;
+      background: #2a2a2a;
+      color: var(--text-color);
+      font-family: 'Roboto', sans-serif;
     }
     #calculatorWidget button {
-      margin: 2px;
-      width: 48px;
-      height: 36px;
-      background: #444;
-      border: none;
+      margin: 3px;
+      width: 54px;
+      height: 40px;
+      background: #2a2a2a;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
-      color: #f0f0f0;
+      color: var(--text-color);
       cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
     }
     #calculatorWidget button:hover {
-      background: #666;
+      background: var(--hover-accent);
+      border-color: var(--hover-accent);
     }
     .calc-row {
       display: flex;
@@ -140,93 +193,103 @@
 <body>
   <header>
     <h1>SatisBoard</h1>
-    <!-- Link to Satisfactory Tools -->
-    <a href="https://www.satisfactorytools.com/1.0" target="_blank">Satisfactory Tools</a>
+    <!-- Updated URL to Satisfactory Tools production -->
+    <a href="https://www.satisfactorytools.com/1.0/production" target="_blank">Satisfactory Tools</a>
   </header>
 
-  <!-- CREATE TASK FORM -->
-  <div class="form-container">
-    <form id="taskForm">
-      <label for="title">Task Title:</label>
-      <input type="text" id="title" name="title" required />
+  <div class="main-layout">
+    <!-- LEFT COLUMN: Form + Edit Form + Task List -->
+    <div class="left-column">
+      <!-- CREATE TASK FORM -->
+      <div class="form-container">
+        <form id="taskForm">
+          <label for="title">Task Title:</label>
+          <input type="text" id="title" name="title" required />
 
-      <label for="note">Note:</label>
-      <textarea id="note" name="note" rows="3"></textarea>
+          <label for="note">Note:</label>
+          <textarea id="note" name="note" rows="3"></textarea>
 
-      <label for="priority">Priority:</label>
-      <select id="priority" name="priority" required>
-        <option value="" disabled selected>Select priority...</option>
-        <option value="Low">Low</option>
-        <option value="Medium">Medium</option>
-        <option value="High">High</option>
-      </select>
+          <label for="priority">Priority:</label>
+          <select id="priority" name="priority" required>
+            <option value="" disabled selected>Select priority...</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
 
-      <button type="submit">Add Task</button>
-    </form>
-  </div>
+          <button type="submit">Add Task</button>
+        </form>
+      </div>
 
-  <!-- EDIT TASK FORM (hidden by default) -->
-  <div class="form-container" id="editFormContainer" style="display: none;">
-    <form id="editForm">
-      <input type="hidden" id="editTaskId" />
+      <!-- EDIT TASK FORM (hidden by default) -->
+      <div class="form-container" id="editFormContainer">
+        <form id="editForm">
+          <input type="hidden" id="editTaskId" />
 
-      <label for="editTitle">Task Title:</label>
-      <input type="text" id="editTitle" name="editTitle" required />
+          <label for="editTitle">Task Title:</label>
+          <input type="text" id="editTitle" name="editTitle" required />
 
-      <label for="editNote">Note:</label>
-      <textarea id="editNote" name="editNote" rows="3"></textarea>
+          <label for="editNote">Note:</label>
+          <textarea id="editNote" name="editNote" rows="3"></textarea>
 
-      <label for="editPriority">Priority:</label>
-      <select id="editPriority" name="editPriority" required>
-        <option value="" disabled selected>Select priority...</option>
-        <option value="Low">Low</option>
-        <option value="Medium">Medium</option>
-        <option value="High">High</option>
-      </select>
+          <label for="editPriority">Priority:</label>
+          <select id="editPriority" name="editPriority" required>
+            <option value="" disabled selected>Select priority...</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
 
-      <button type="submit">Update Task</button>
-      <button type="button" onclick="cancelEdit()">Cancel</button>
-    </form>
-  </div>
+          <button type="submit">Update Task</button>
+          <button type="button" onclick="cancelEdit()">Cancel</button>
+        </form>
+      </div>
 
-  <!-- TASKS CONTAINER -->
-  <div id="tasks-container"></div>
-
-  <!-- CALCULATOR WIDGET -->
-  <div id="calculatorWidget">
-    <div id="calculatorHeader">Calculator</div>
-    <input id="calcInput" type="text" placeholder="0" readonly />
-
-    <div class="calc-row">
-      <button onclick="pressKey('7')">7</button>
-      <button onclick="pressKey('8')">8</button>
-      <button onclick="pressKey('9')">9</button>
-      <button onclick="pressKey('/')">÷</button>
+      <!-- TASKS LIST -->
+      <div id="tasks-container"></div>
     </div>
-    <div class="calc-row">
-      <button onclick="pressKey('4')">4</button>
-      <button onclick="pressKey('5')">5</button>
-      <button onclick="pressKey('6')">6</button>
-      <button onclick="pressKey('*')">×</button>
-    </div>
-    <div class="calc-row">
-      <button onclick="pressKey('1')">1</button>
-      <button onclick="pressKey('2')">2</button>
-      <button onclick="pressKey('3')">3</button>
-      <button onclick="pressKey('-')">−</button>
-    </div>
-    <div class="calc-row">
-      <button onclick="pressKey('0')">0</button>
-      <button onclick="pressKey('.')">.</button>
-      <button onclick="calculate()">=</button>
-      <button onclick="pressKey('+')">+</button>
-    </div>
-    <div class="calc-row">
-      <button onclick="clearCalc()" style="width:100%">C</button>
+
+    <!-- RIGHT COLUMN: Draggable Calculator -->
+    <div class="right-column">
+      <div id="calculatorWidget">
+        <div id="calculatorHeader">Calculator</div>
+        <input id="calcInput" type="text" placeholder="0" readonly />
+
+        <div class="calc-row">
+          <button onclick="pressKey('7')">7</button>
+          <button onclick="pressKey('8')">8</button>
+          <button onclick="pressKey('9')">9</button>
+          <button onclick="pressKey('/')">÷</button>
+        </div>
+        <div class="calc-row">
+          <button onclick="pressKey('4')">4</button>
+          <button onclick="pressKey('5')">5</button>
+          <button onclick="pressKey('6')">6</button>
+          <button onclick="pressKey('*')">×</button>
+        </div>
+        <div class="calc-row">
+          <button onclick="pressKey('1')">1</button>
+          <button onclick="pressKey('2')">2</button>
+          <button onclick="pressKey('3')">3</button>
+          <button onclick="pressKey('-')">−</button>
+        </div>
+        <div class="calc-row">
+          <button onclick="pressKey('0')">0</button>
+          <button onclick="pressKey('.')">.</button>
+          <button onclick="calculate()">=</button>
+          <button onclick="pressKey('+')">+</button>
+        </div>
+        <div class="calc-row">
+          <button onclick="clearCalc()" style="width:100%">C</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
+    /*******************************
+     *  TASKS & FORMS LOGIC
+     ******************************/
     const taskForm = document.getElementById('taskForm');
     const tasksContainer = document.getElementById('tasks-container');
 
@@ -238,7 +301,6 @@
     const editNote = document.getElementById('editNote');
     const editPriority = document.getElementById('editPriority');
 
-    // On page load, fetch tasks
     window.addEventListener('DOMContentLoaded', loadTasks);
 
     // Create new task
@@ -345,7 +407,6 @@
           alert('Error updating task');
           return;
         }
-
         cancelEdit();
         loadTasks();
       } catch (error) {
@@ -353,7 +414,7 @@
       }
     });
 
-    // Cancel edit (hide form)
+    // Cancel edit
     function cancelEdit() {
       editFormContainer.style.display = 'none';
       editForm.reset();
@@ -362,7 +423,6 @@
     // Delete a task
     async function deleteTask(taskId) {
       if (!confirm('Are you sure you want to delete this task?')) return;
-
       try {
         const response = await fetch(`/api/tasks/${taskId}`, {
           method: 'DELETE'
@@ -377,16 +437,11 @@
       }
     }
 
-    /* 
-      CALCULATOR LOGIC
-      - pressKey() appends a character
-      - calculate() uses eval() for simplicity (not recommended in production),
-        but it's fine for a quick local calculator.
-      - clearCalc() resets the display
-    */
+    /*******************************
+     *  CALCULATOR LOGIC
+     ******************************/
     function pressKey(key) {
       const display = document.getElementById('calcInput');
-      // If display is "0", replace it; otherwise append
       if (display.value === '0' || display.value === '') {
         display.value = key;
       } else {
@@ -397,10 +452,10 @@
     function calculate() {
       const display = document.getElementById('calcInput');
       try {
-        // Quick and dirty approach using eval
+        // Simple eval for demonstration
         const result = eval(display.value);
         display.value = result;
-      } catch (err) {
+      } catch {
         display.value = 'Error';
       }
     }
@@ -409,11 +464,9 @@
       document.getElementById('calcInput').value = '';
     }
 
-    /*
-      DRAGGABLE CALCULATOR WIDGET
-      - We'll track mouse events on #calculatorHeader
-      - The rest of the widget moves along
-    */
+    /*******************************
+     *  DRAGGABLE WIDGET
+     ******************************/
     const calculatorWidget = document.getElementById('calculatorWidget');
     const calculatorHeader = document.getElementById('calculatorHeader');
 
@@ -422,7 +475,6 @@
 
     function startDrag(e) {
       e.preventDefault();
-      // Current mouse position relative to the widget's top-left
       offsetX = e.clientX - calculatorWidget.getBoundingClientRect().left;
       offsetY = e.clientY - calculatorWidget.getBoundingClientRect().top;
       document.addEventListener('mousemove', dragWidget);
@@ -431,14 +483,22 @@
 
     function dragWidget(e) {
       e.preventDefault();
-      // Calculate new widget position
-      const left = e.clientX - offsetX;
-      const top = e.clientY - offsetY;
+      // New position relative to the .right-column
+      const parentRect = calculatorWidget.parentElement.getBoundingClientRect();
+      let left = e.clientX - offsetX - parentRect.left;
+      let top = e.clientY - offsetY - parentRect.top;
+
+      // Optional: Keep calculator within the .right-column boundaries
+      const maxLeft = parentRect.width - calculatorWidget.offsetWidth;
+      const maxTop = parentRect.height - calculatorWidget.offsetHeight;
+      left = Math.max(0, Math.min(left, maxLeft));
+      top = Math.max(0, Math.min(top, maxTop));
+
       calculatorWidget.style.left = left + 'px';
       calculatorWidget.style.top = top + 'px';
     }
 
-    function stopDrag(e) {
+    function stopDrag() {
       document.removeEventListener('mousemove', dragWidget);
       document.removeEventListener('mouseup', stopDrag);
     }
